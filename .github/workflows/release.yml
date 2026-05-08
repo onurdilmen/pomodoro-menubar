@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build DMG and publish release
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine VERSION from tag
+        id: version
+        env:
+          REF: ${{ github.ref_name }}
+        run: |
+          # github.ref_name = "v0.2.0" -> VERSION = "0.2.0"
+          VERSION="${REF#v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "VERSION=$VERSION"
+
+      - name: Show toolchain
+        run: |
+          swift --version
+          xcodebuild -version || true
+
+      - name: Build .app + DMG
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: ./package.sh --dmg
+
+      - name: Verify artifact
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          ls -la "Pomodoro-${VERSION}.dmg"
+          du -h "Pomodoro-${VERSION}.dmg"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          DMG="Pomodoro-${VERSION}.dmg"
+          # CHANGELOG.md varsa ondan release notes üret, yoksa kısa fallback
+          if [ -f CHANGELOG.md ]; then
+            NOTES=$(awk -v v="$VERSION" '
+              $0 ~ "^## \\[" v "\\]" {flag=1; print; next}
+              flag && /^## \[/ {flag=0}
+              flag {print}
+            ' CHANGELOG.md)
+            if [ -z "$NOTES" ]; then
+              NOTES="Release $TAG"
+            fi
+          else
+            NOTES="Release $TAG"
+          fi
+          # Release zaten varsa upload-only, yoksa create
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$DMG" --clobber
+          else
+            printf '%s\n' "$NOTES" | gh release create "$TAG" "$DMG" \
+              --title "$TAG" \
+              --notes-file -
+          fi

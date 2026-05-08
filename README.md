@@ -32,12 +32,28 @@ A focused Pomodoro timer that lives in your macOS menu bar. Built natively in Sw
 
 #### Option 1: Download the DMG (recommended for users)
 
-1. Download `Pomodoro-0.1.0.dmg` from [Releases](https://github.com/onurdilmen/pomodoro-menubar/releases)
+1. Download the latest `Pomodoro-x.y.z.dmg` from [Releases](https://github.com/onurdilmen/pomodoro-menubar/releases/latest)
 2. Open the DMG and drag **Pomodoro** to **Applications**
-3. **First launch:** macOS will block the app because it's not signed by an Apple-verified developer. Right-click `Pomodoro.app` → **Open** → click **Open** in the dialog. You only need to do this once.
+3. **First launch — pick the path that matches your macOS version:**
+
+   **macOS Sonoma (14) and earlier**
+   - In Applications, **right-click** `Pomodoro.app` → **Open** → click **Open** in the dialog.
+
+   **macOS Sequoia (15) and later** _(Apple removed the right-click bypass)_
+   - Try to open the app once (it will be blocked).
+   - Open **System Settings → Privacy & Security**, scroll to **Security**.
+   - You'll see _"Pomodoro was blocked because it is not from an identified developer."_ → click **Open Anyway**, enter your password.
+   - Try opening the app again — now it works.
+
+   **Fallback (any version, terminal):**
+
+   ```bash
+   xattr -d com.apple.quarantine /Applications/Pomodoro.app
+   ```
+
 4. The app appears in your menu bar as `🍅 25:00`. **Left-click** to open the timer; **right-click** for settings.
 
-> **Why the warning?** This app is not signed with a paid Apple Developer ID ($99/year). The code is open source and you can audit it. After the first manual approval, macOS remembers your decision.
+> **Why the warning?** This app is not signed with a paid Apple Developer ID ($99/year). The code is open source and you can audit it. After the first manual approval, macOS remembers your decision and the warning never appears again.
 
 #### Option 2: Build from source
 
@@ -148,9 +164,25 @@ Menü çubuğunda yaşayan, native macOS Pomodoro zamanlayıcısı. Swift ile ya
 
 ### Kurulum
 
-1. [Releases](https://github.com/onurdilmen/pomodoro-menubar/releases) sayfasından `Pomodoro-0.1.0.dmg` indir
+1. [Releases](https://github.com/onurdilmen/pomodoro-menubar/releases/latest) sayfasından son sürüm `Pomodoro-x.y.z.dmg`'i indir
 2. DMG'yi aç, **Pomodoro**'yu **Applications**'a sürükle
-3. **İlk açılışta:** macOS uyarı verir ("doğrulanmış geliştirici değil" gibi). Bu uygulama Apple Developer ID ile imzalı olmadığı için. Çözüm: `Pomodoro.app`'e sağ tık → **Aç** → açılan diyalogta **Aç** tıkla. Sadece ilk seferinde gerekli.
+3. **İlk açılış — macOS sürümüne göre:**
+
+   **macOS Sonoma (14) ve öncesi**
+   - Applications'ta `Pomodoro.app`'e **sağ tık** → **Aç** → diyalogtan **Aç**.
+
+   **macOS Sequoia (15) ve sonrası** _(Apple sağ tık bypass'ini kaldırdı)_
+   - Uygulamayı bir kez aç (engellenecek).
+   - **Sistem Ayarları → Gizlilik ve Güvenlik**'i aç, **Güvenlik** bölümüne in.
+   - _"Pomodoro tanımlı bir geliştiriciden olmadığı için engellendi"_ satırını gör → **Yine de Aç** → şifre.
+   - Tekrar aç — bu sefer çalışır.
+
+   **Alternatif (tüm sürümler, terminal):**
+
+   ```bash
+   xattr -d com.apple.quarantine /Applications/Pomodoro.app
+   ```
+
 4. Menü çubuğunda `🍅 25:00` görünür. **Sol tık** → zamanlayıcı; **sağ tık** → ayarlar.
 
 ### Kaynak koddan derle

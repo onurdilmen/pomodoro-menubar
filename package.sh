@@ -38,6 +38,12 @@ BIN_NAME="Pomodoro"
 TARGET_NAME="PomodoroMenubar"
 INSTALL_PATH="/Applications/${APP_DIR}"
 
+# Version: env var > git tag > fallback. CI tag push'larında VERSION=0.2.0 olarak çağırır.
+if [[ -z "${VERSION:-}" ]]; then
+    VERSION=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo "0.1.0")
+fi
+echo "==> VERSION=$VERSION"
+
 # 1) İkon (gerekirse veya --icon ise)
 if [[ "$DO_ICON" -eq 1 || ! -f "AppIcon.icns" ]]; then
     echo "==> İkon üretiliyor (icon-gen.swift)…"
@@ -73,6 +79,10 @@ fi
 
 cp Info.plist "$APP_DIR/Contents/Info.plist"
 
+# Bundle içindeki version string'lerini gerçek VERSION ile güncelle
+/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$APP_DIR/Contents/Info.plist" 2>/dev/null || true
+/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $VERSION" "$APP_DIR/Contents/Info.plist" 2>/dev/null || true
+
 if [[ -f "AppIcon.icns" ]]; then
     cp "AppIcon.icns" "$APP_DIR/Contents/Resources/AppIcon.icns"
 fi
@@ -102,7 +112,7 @@ fi
 
 # 5) DMG (--dmg) — hdiutil ile (Mac yerli, AppleScript yok)
 if [[ "$DO_DMG" -eq 1 ]]; then
-    DMG_NAME="Pomodoro-0.1.0.dmg"
+    DMG_NAME="Pomodoro-${VERSION}.dmg"
     STAGING=$(mktemp -d -t pomodoro-dmg)
     trap "rm -rf '$STAGING'" EXIT
 
@@ -130,4 +140,4 @@ fi
 echo
 echo "Çalıştır: open $APP_DIR"
 [[ "$DO_INSTALL" -eq 1 ]] && echo "Ya da: open $INSTALL_PATH"
-[[ "$DO_DMG" -eq 1 ]] && echo "DMG paylaş: $(pwd)/Pomodoro-0.1.0.dmg"
+[[ "$DO_DMG" -eq 1 ]] && echo "DMG paylaş: $(pwd)/Pomodoro-${VERSION}.dmg"
