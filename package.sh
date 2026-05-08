@@ -139,5 +139,9 @@ fi
 
 echo
 echo "Çalıştır: open $APP_DIR"
-[[ "$DO_INSTALL" -eq 1 ]] && echo "Ya da: open $INSTALL_PATH"
-[[ "$DO_DMG" -eq 1 ]] && echo "DMG paylaş: $(pwd)/Pomodoro-${VERSION}.dmg"
+if [[ "$DO_INSTALL" -eq 1 ]]; then
+    echo "Ya da: open $INSTALL_PATH"
+fi
+if [[ "$DO_DMG" -eq 1 ]]; then
+    echo "DMG paylaş: $(pwd)/Pomodoro-${VERSION}.dmg"
+fi
