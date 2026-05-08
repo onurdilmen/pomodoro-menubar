@@ -164,17 +164,27 @@ if [[ "$DO_DMG" -eq 1 ]]; then
     cp dmg-background@2x.png "$STAGING/.background/dmg-background@2x.png"
 
     echo "==> RW DMG oluşturuluyor…"
-    hdiutil create \
+    # APFS default; -size belirtmeden srcfolder'dan otomatik hesaplansın
+    if hdiutil create \
         -volname "Pomodoro" \
         -srcfolder "$STAGING" \
-        -fs HFS+ -format UDRW -ov -size 50m \
-        "$RW_DMG" >/dev/null
+        -format UDRW -ov \
+        "$RW_DMG" 2>&1; then
+        DMG_RW_OK=1
+    else
+        DMG_RW_OK=0
+        echo "Uyarı: RW DMG oluşturulamadı, basit UDZO'ya düşüyorum"
+    fi
 
-    echo "==> Mount + Finder layout…"
-    hdiutil attach "$RW_DMG" -nobrowse -noautoopen >/dev/null
-    sleep 2
+    if [[ "$DMG_RW_OK" -eq 1 ]]; then
+        echo "==> Mount + Finder layout…"
+        hdiutil attach "$RW_DMG" -nobrowse -noautoopen >/dev/null 2>&1 || true
+        sleep 2
 
-    osascript <<'APPLESCRIPT' || echo "Uyarı: AppleScript layout başarısız (DMG yine de çalışır)"
+        # AppleScript GitHub Actions runner'da Finder'a bağlanamayabilir.
+        # Hata durumunda layout default kalır, background image yine de
+        # /.background/ üzerinden DMG'de bulunur.
+        osascript <<'APPLESCRIPT' 2>&1 || echo "Uyarı: AppleScript layout başarısız (DMG yine de çalışır)"
 tell application "Finder"
     tell disk "Pomodoro"
         open
@@ -196,14 +206,24 @@ tell application "Finder"
 end tell
 APPLESCRIPT
 
-    sync
-    sleep 2
-    hdiutil detach "/Volumes/Pomodoro" -force 2>/dev/null || true
-    sleep 1
+        sync
+        sleep 2
+        hdiutil detach "/Volumes/Pomodoro" -force 2>/dev/null || true
+        sleep 1
 
-    echo "==> Read-only DMG'ye dönüştürülüyor (UDZO sıkıştırma)…"
-    hdiutil convert "$RW_DMG" -format UDZO -imagekey zlib-level=9 -ov -o "$DMG_NAME" >/dev/null
-    rm -f "$RW_DMG"
+        echo "==> Read-only DMG'ye dönüştürülüyor (UDZO sıkıştırma)…"
+        hdiutil convert "$RW_DMG" -format UDZO -imagekey zlib-level=9 -ov -o "$DMG_NAME" >/dev/null
+        rm -f "$RW_DMG"
+    else
+        # Fallback: tek adımda UDZO yarat (layout yok, ama background image
+        # staging içinde .background/ klasöründe yer alır)
+        echo "==> Fallback: UDZO DMG (layout yok)"
+        hdiutil create \
+            -volname "Pomodoro" \
+            -srcfolder "$STAGING" \
+            -format UDZO -imagekey zlib-level=9 -ov \
+            "$DMG_NAME" >/dev/null
+    fi
 
     codesign --force --sign - "$DMG_NAME" 2>/dev/null || true
 
