@@ -8,6 +8,15 @@
         <description>Updates for Pomodoro — a tiny native macOS menu bar Pomodoro timer.</description>
         <language>en</language>
         <item>
+            <title>Pomodoro 0.2.2</title>
+            <pubDate>Fri, 08 May 2026 07:15:25 +0000</pubDate>
+            <sparkle:version>0.2.2</sparkle:version>
+            <sparkle:shortVersionString>0.2.2</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+            <sparkle:releaseNotesLink>https://onurdilmen.github.io/pomodoro-menubar/release-notes/0.2.2.md</sparkle:releaseNotesLink>
+            <enclosure url="https://github.com/onurdilmen/pomodoro-menubar/releases/download/v0.2.2/Pomodoro-0.2.2.dmg" sparkle:edSignature="yP5hIKzDu5Cga2+ZNABYTSi7cJNOmemBCWEaVcJO2MVHUlcdMB2wrtO/4MVxnKmxodcIrXQUIFc65lTKDLKUBg==" length="2335979" type="application/octet-stream" />
+        </item>
+        <item>
             <title>Pomodoro 0.2.1</title>
             <pubDate>Fri, 08 May 2026 07:10:26 +0000</pubDate>
             <sparkle:version>0.2.1</sparkle:version>
