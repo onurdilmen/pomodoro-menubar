@@ -63,23 +63,24 @@ jobs:
           echo "ed_signature=$ED_SIG" >> "$GITHUB_OUTPUT"
           echo "length=$LEN" >> "$GITHUB_OUTPUT"
 
-      - name: Update docs/appcast.xml
+      - name: Update docs/appcast.xml on main
         env:
           VERSION: ${{ steps.version.outputs.version }}
           TAG: ${{ github.ref_name }}
           ED_SIG: ${{ steps.sign.outputs.ed_signature }}
           LEN: ${{ steps.sign.outputs.length }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-        run: python3 scripts/update_appcast.py "$VERSION" "$TAG" "$ED_SIG" "$LEN"
-
-      - name: Commit appcast.xml back to main
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Tag commit'te değiliz, main'e geçip orada güncelliyoruz.
+          # update_appcast.py CHANGELOG.md ve docs/appcast.xml okur,
+          # ikisi de main'in tip'inde olur — tag commit'in dosyalarına
+          # bağımlı değiliz.
           git fetch origin main
           git checkout main
+          git pull --rebase origin main
+          python3 scripts/update_appcast.py "$VERSION" "$TAG" "$ED_SIG" "$LEN"
           git add docs/appcast.xml docs/release-notes/
           if git diff --cached --quiet; then
             echo "No appcast changes to commit"
