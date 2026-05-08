@@ -96,6 +96,19 @@ fi
 
 cp Info.plist "$APP_DIR/Contents/Info.plist"
 
+# Localization marker'ları — Sparkle ve sistem app'in dil destek listesini buradan
+# okur. tr.lproj boş olabilir, sadece "Türkçeyi destekliyorum" sinyali gönderiyor.
+mkdir -p "$APP_DIR/Contents/Resources/tr.lproj"
+mkdir -p "$APP_DIR/Contents/Resources/en.lproj"
+cat > "$APP_DIR/Contents/Resources/tr.lproj/InfoPlist.strings" <<'PLIST'
+"CFBundleName" = "Pomodoro";
+"CFBundleDisplayName" = "Pomodoro";
+PLIST
+cat > "$APP_DIR/Contents/Resources/en.lproj/InfoPlist.strings" <<'PLIST'
+"CFBundleName" = "Pomodoro";
+"CFBundleDisplayName" = "Pomodoro";
+PLIST
+
 # Bundle içindeki version string'lerini gerçek VERSION ile güncelle
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$APP_DIR/Contents/Info.plist" 2>/dev/null || true
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $VERSION" "$APP_DIR/Contents/Info.plist" 2>/dev/null || true
