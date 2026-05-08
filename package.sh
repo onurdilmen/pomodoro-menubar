@@ -140,27 +140,71 @@ if [[ "$DO_INSTALL" -eq 1 ]]; then
     echo "    Kuruldu: $INSTALL_PATH"
 fi
 
-# 5) DMG (--dmg) — hdiutil ile (Mac yerli, AppleScript yok)
+# 5) DMG (--dmg) — Türkçe arka plan + sürükle-bırak layout ile
 if [[ "$DO_DMG" -eq 1 ]]; then
     DMG_NAME="Pomodoro-${VERSION}.dmg"
+    RW_DMG="rw.${VERSION}.dmg"
     STAGING=$(mktemp -d -t pomodoro-dmg)
-    trap "rm -rf '$STAGING'" EXIT
+    trap "rm -rf '$STAGING' '$RW_DMG' 2>/dev/null" EXIT
 
     rm -f "$DMG_NAME" rw.*.dmg
     hdiutil detach "/Volumes/Pomodoro" -force 2>/dev/null || true
 
+    # Background görseli yoksa üret
+    if [[ ! -f "dmg-background.png" || ! -f "dmg-background@2x.png" ]]; then
+        echo "==> DMG arka planı üretiliyor (dmg-bg-gen.swift)…"
+        swift dmg-bg-gen.swift
+    fi
+
     echo "==> DMG staging hazırlanıyor…"
     cp -R "$APP_DIR" "$STAGING/"
     ln -s /Applications "$STAGING/Applications"
+    mkdir -p "$STAGING/.background"
+    cp dmg-background.png "$STAGING/.background/dmg-background.png"
+    cp dmg-background@2x.png "$STAGING/.background/dmg-background@2x.png"
 
-    echo "==> DMG üretiliyor: $DMG_NAME"
+    echo "==> RW DMG oluşturuluyor…"
     hdiutil create \
         -volname "Pomodoro" \
         -srcfolder "$STAGING" \
-        -ov -format UDZO \
-        "$DMG_NAME" >/dev/null
+        -fs HFS+ -format UDRW -ov -size 50m \
+        "$RW_DMG" >/dev/null
 
-    # Code-sign DMG (ad-hoc)
+    echo "==> Mount + Finder layout…"
+    hdiutil attach "$RW_DMG" -nobrowse -noautoopen >/dev/null
+    sleep 2
+
+    osascript <<'APPLESCRIPT' || echo "Uyarı: AppleScript layout başarısız (DMG yine de çalışır)"
+tell application "Finder"
+    tell disk "Pomodoro"
+        open
+        set current view of container window to icon view
+        set toolbar visible of container window to false
+        set statusbar visible of container window to false
+        set the bounds of container window to {400, 100, 940, 480}
+        set viewOptions to the icon view options of container window
+        set arrangement of viewOptions to not arranged
+        set icon size of viewOptions to 96
+        set text size of viewOptions to 12
+        set background picture of viewOptions to file ".background:dmg-background.png"
+        set position of item "Pomodoro.app" of container window to {140, 200}
+        set position of item "Applications" of container window to {400, 200}
+        update without registering applications
+        delay 1
+        close
+    end tell
+end tell
+APPLESCRIPT
+
+    sync
+    sleep 2
+    hdiutil detach "/Volumes/Pomodoro" -force 2>/dev/null || true
+    sleep 1
+
+    echo "==> Read-only DMG'ye dönüştürülüyor (UDZO sıkıştırma)…"
+    hdiutil convert "$RW_DMG" -format UDZO -imagekey zlib-level=9 -ov -o "$DMG_NAME" >/dev/null
+    rm -f "$RW_DMG"
+
     codesign --force --sign - "$DMG_NAME" 2>/dev/null || true
 
     echo "==> DMG tamam: $(pwd)/$DMG_NAME"

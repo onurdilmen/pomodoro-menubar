@@ -44,6 +44,11 @@ struct Settings {
         get { suite.object(forKey: Key.notificationEnabled) as? Bool ?? true }
         set { suite.set(newValue, forKey: Key.notificationEnabled) }
     }
+
+    static var welcomeShown: Bool {
+        get { suite.bool(forKey: "firstLaunchWelcomeShown") }
+        set { suite.set(newValue, forKey: "firstLaunchWelcomeShown") }
+    }
 }
 
 // MARK: - WebKit ↔ Swift köprüsü
@@ -377,6 +382,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             options: [.alert, .sound]
         ) { _, _ in }
 
+        // İlk açılışta Türkçe karşılama
+        showWelcomeIfNeeded()
+
         // Global hotkey: ⌘⇧P → popover toggle
         hotKey.onPress = { [weak self] in
             self?.togglePopover()
@@ -557,6 +565,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func checkForUpdates() {
         updaterController.checkForUpdates(nil)
+    }
+
+    private func showWelcomeIfNeeded() {
+        guard !Settings.welcomeShown else { return }
+        // applicationDidFinishLaunching tamamlandıktan sonra göster (status item önce çizilsin)
+        DispatchQueue.main.async { [weak self] in
+            let alert = NSAlert()
+            alert.messageText = "Pomodoro'ya hoş geldin 🍅"
+            alert.informativeText = """
+            Pomodoro şimdi menü çubuğunda — sağ üstteki 🍅 simgesini ara.
+
+            • Sol tık → zamanlayıcı popover'ı
+            • Sağ tık → ayarlar: süreler, bildirimler, otomatik başlatma
+            • ⌘⇧P → her yerden popover'ı aç/kapat
+
+            Yeni sürümler otomatik bildirilir; \"Şimdi Yükle\" diyerek tek tıkla güncellenirsin.
+            """
+            alert.alertStyle = .informational
+            alert.addButton(withTitle: "Anladım")
+            NSApp.activate(ignoringOtherApps: true)
+            alert.runModal()
+            Settings.welcomeShown = true
+            // Welcome kapatıldıktan sonra app accessory mode'a geri dön
+            _ = self
+        }
     }
 
     @objc private func testNotification() {

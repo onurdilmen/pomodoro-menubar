@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-05-08
+
+### Added
+
+- **Türkçe karşılama ekranı** — Pomodoro ilk açıldığında menü çubuğundaki kullanım özetini gösteren bir NSAlert. Kullanıcı "Anladım" deyince bir daha gösterilmez (`UserDefaults` flag).
+- **DMG kurulum penceresi tasarımı** — Programatik olarak üretilen 540×380 + @2x retina arka plan (`dmg-bg-gen.swift`): Türkçe başlık, "Pomodoro.app → Applications" sürükleme oku, Sistem Ayarları rehberi.
+- `package.sh` artık AppleScript ile Finder layout'unu ayarlıyor (icon konumları, pencere boyutu, gizli `.background/` klasörü).
+
 ## [0.2.3] - 2026-05-08
 
 ### Changed
