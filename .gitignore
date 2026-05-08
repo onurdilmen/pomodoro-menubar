@@ -1,0 +1,28 @@
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved
+
+# Generated build outputs
+Pomodoro.app/
+AppIcon.icns
+AppIcon.iconset/
+
+# Release artifacts (uploaded to GitHub Releases, not committed)
+*.dmg
+rw.*.dmg
+
+# Xcode
+*.xcodeproj/
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# OS / temp
+*.log
+/tmp/

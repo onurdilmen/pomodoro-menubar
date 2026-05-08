@@ -1,0 +1,676 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pomodoro</title>
+    <style>
+      :root {
+        /* Linear/Vercel-style modern minimal — dark */
+        --bg: oklch(13% 0.015 250);
+        --bg-2: oklch(17% 0.018 252);
+        --surface: oklch(20% 0.012 250);
+        --surface-2: oklch(25% 0.012 250);
+        --fg: oklch(96% 0.005 250);
+        --muted: oklch(58% 0.012 250);
+        --border: oklch(28% 0.012 250);
+        --border-2: oklch(36% 0.012 250);
+
+        /* Single accent — tomato */
+        --accent: oklch(64% 0.2 28);
+        --accent-2: oklch(74% 0.16 40);
+        --accent-soft: oklch(64% 0.2 28 / 0.14);
+
+        --font-sans:
+          -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI",
+          system-ui, sans-serif;
+        --font-mono:
+          "JetBrains Mono", "SF Mono", ui-monospace, "Menlo", monospace;
+
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --radius-pill: 999px;
+
+        --t-fast: 140ms cubic-bezier(0.2, 0.8, 0.2, 1);
+        --t-med: 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        margin: 0;
+        font-family: var(--font-sans);
+        color: var(--fg);
+        background:
+          radial-gradient(
+            1200px 700px at 50% -10%,
+            oklch(64% 0.2 28 / 0.1),
+            transparent 60%
+          ),
+          radial-gradient(
+            900px 600px at 100% 110%,
+            oklch(64% 0.2 28 / 0.06),
+            transparent 65%
+          ),
+          linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 50%, var(--bg) 100%);
+        min-height: 100vh;
+        -webkit-font-smoothing: antialiased;
+        letter-spacing: -0.01em;
+        overflow: hidden;
+      }
+
+      .app {
+        min-height: 100vh;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        padding: 24px clamp(20px, 4vw, 48px);
+        gap: 24px;
+      }
+
+      /* ---------- Header ---------- */
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 600;
+        font-size: 14px;
+        letter-spacing: -0.01em;
+        color: var(--fg);
+      }
+      .brand-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: var(--accent);
+        box-shadow: 0 0 12px oklch(64% 0.2 28 / 0.7);
+      }
+      .brand small {
+        color: var(--muted);
+        font-weight: 400;
+        margin-inline-start: 4px;
+      }
+
+      .counter {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        border-radius: var(--radius-pill);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        font-size: 13px;
+        color: var(--fg);
+        font-variant-numeric: tabular-nums;
+        transition:
+          transform var(--t-fast),
+          border-color var(--t-fast);
+      }
+      .counter[data-celebrate="true"] {
+        transform: scale(1.06);
+        border-color: var(--accent);
+      }
+      .counter .label {
+        color: var(--muted);
+      }
+      .counter .num {
+        font-weight: 600;
+      }
+
+      /* ---------- Main ---------- */
+      main {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 56px;
+      }
+
+      /* Tabs */
+      .tabs {
+        display: inline-flex;
+        gap: 4px;
+        padding: 4px;
+        border-radius: var(--radius-pill);
+        background: var(--surface);
+        border: 1px solid var(--border);
+      }
+      .tab {
+        appearance: none;
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        font: inherit;
+        font-size: 13px;
+        font-weight: 500;
+        padding: 9px 18px;
+        border-radius: var(--radius-pill);
+        cursor: pointer;
+        transition:
+          color var(--t-fast),
+          background var(--t-fast);
+        letter-spacing: -0.005em;
+        white-space: nowrap;
+      }
+      .tab:hover {
+        color: var(--fg);
+      }
+      .tab[aria-selected="true"] {
+        background: var(--surface-2);
+        color: var(--fg);
+        box-shadow: inset 0 0 0 1px var(--border-2);
+      }
+      .tab .min {
+        color: var(--muted);
+        margin-inline-start: 6px;
+        font-variant-numeric: tabular-nums;
+      }
+      .tab[aria-selected="true"] .min {
+        color: var(--accent);
+      }
+
+      /* Ring + timer */
+      .ring-wrap {
+        position: relative;
+        width: min(72vmin, 420px);
+        aspect-ratio: 1;
+      }
+      .ring {
+        width: 100%;
+        height: 100%;
+        transform: rotate(-90deg);
+        filter: drop-shadow(0 0 40px oklch(64% 0.2 28 / 0.18));
+      }
+      .ring .track {
+        fill: none;
+        stroke: var(--border);
+        stroke-width: 18;
+        opacity: 0.6;
+      }
+      .ring .progress {
+        fill: none;
+        stroke: url(#ringGrad);
+        stroke-width: 18;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 950ms cubic-bezier(0.4, 0.1, 0.2, 1);
+      }
+      .ring-center {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        pointer-events: none;
+      }
+      .time {
+        font-family: var(--font-mono);
+        font-weight: 500;
+        font-size: clamp(56px, 12vmin, 96px);
+        letter-spacing: -0.04em;
+        color: var(--fg);
+        font-variant-numeric: tabular-nums;
+        line-height: 1;
+      }
+      .mode-label {
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .mode-label[data-running="true"] {
+        color: var(--accent);
+      }
+
+      /* Controls */
+      .controls {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .btn {
+        appearance: none;
+        cursor: pointer;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 500;
+        letter-spacing: -0.005em;
+        padding: 11px 22px;
+        border-radius: var(--radius-sm);
+        transition:
+          background var(--t-fast),
+          border-color var(--t-fast),
+          color var(--t-fast),
+          transform var(--t-fast);
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--fg);
+        min-width: 110px;
+      }
+      .btn:hover {
+        background: var(--surface-2);
+        border-color: var(--border-2);
+      }
+      .btn:active {
+        transform: translateY(1px);
+      }
+      .btn:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .btn--primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: oklch(15% 0.02 28);
+      }
+      .btn--primary:hover {
+        background: var(--accent-2);
+        border-color: var(--accent-2);
+      }
+
+      .btn--ghost {
+        background: transparent;
+      }
+      .btn[disabled] {
+        opacity: 0.4;
+        cursor: not-allowed;
+        transform: none !important;
+      }
+
+      /* Footer */
+      footer {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 18px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      kbd {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        padding: 2px 6px;
+        border-radius: 4px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        color: var(--fg);
+        box-shadow: 0 1px 0 var(--border-2) inset;
+      }
+
+      /* Subtle running pulse on ring */
+      @keyframes pulse {
+        0%,
+        100% {
+          filter: drop-shadow(0 0 40px oklch(64% 0.2 28 / 0.2));
+        }
+        50% {
+          filter: drop-shadow(0 0 60px oklch(64% 0.2 28 / 0.32));
+        }
+      }
+      .ring[data-running="true"] {
+        animation: pulse 3.2s ease-in-out infinite;
+      }
+
+      @media (max-width: 520px) {
+        .app {
+          padding: 18px;
+          gap: 18px;
+        }
+        main {
+          gap: 36px;
+        }
+        .tab {
+          padding: 8px 12px;
+          font-size: 12px;
+        }
+        .btn {
+          min-width: 92px;
+          padding: 10px 16px;
+        }
+        footer {
+          font-size: 11px;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .ring[data-running="true"] {
+          animation: none;
+        }
+        .ring .progress {
+          transition: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header>
+        <div class="brand" aria-label="Pomodoro">
+          <span class="brand-dot" aria-hidden="true"></span>
+          <span>pomodoro</span>
+          <small>· focus timer</small>
+        </div>
+        <div class="counter" id="counter" aria-live="polite">
+          <span aria-hidden="true">🍅</span>
+          <span class="label">×</span>
+          <span class="num" id="counterNum">0</span>
+        </div>
+      </header>
+
+      <main>
+        <div class="tabs" role="tablist" aria-label="Mod seçimi">
+          <button class="tab" role="tab" data-mode="work" aria-selected="true">
+            Çalışma <span class="min">25dk</span>
+          </button>
+          <button
+            class="tab"
+            role="tab"
+            data-mode="short"
+            aria-selected="false"
+          >
+            Kısa Mola <span class="min">5dk</span>
+          </button>
+          <button class="tab" role="tab" data-mode="long" aria-selected="false">
+            Uzun Mola <span class="min">15dk</span>
+          </button>
+        </div>
+
+        <div class="ring-wrap">
+          <svg class="ring" id="ring" viewBox="0 0 400 400" aria-hidden="true">
+            <defs>
+              <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="oklch(64% 0.20 28)" />
+                <stop offset="100%" stop-color="oklch(76% 0.16 45)" />
+              </linearGradient>
+            </defs>
+            <circle class="track" cx="200" cy="200" r="170" />
+            <circle
+              class="progress"
+              id="progress"
+              cx="200"
+              cy="200"
+              r="170"
+              stroke-dasharray="1068.14"
+              stroke-dashoffset="0"
+            />
+          </svg>
+          <div class="ring-center">
+            <div class="time" id="time" aria-live="off">25:00</div>
+            <div class="mode-label" id="modeLabel">Çalışma</div>
+          </div>
+        </div>
+
+        <div class="controls" role="group" aria-label="Kontroller">
+          <button class="btn btn--primary" id="startBtn">Başlat</button>
+          <button class="btn" id="pauseBtn" disabled>Duraklat</button>
+          <button class="btn btn--ghost" id="resetBtn">Sıfırla</button>
+        </div>
+      </main>
+
+      <footer>
+        <span><kbd>Space</kbd> başlat / duraklat</span>
+        <span><kbd>R</kbd> sıfırla</span>
+      </footer>
+    </div>
+
+    <script>
+      (() => {
+        "use strict";
+
+        const MODES = {
+          work: { duration: 25 * 60, label: "Çalışma", short: "Çalışma" },
+          short: { duration: 5 * 60, label: "Kısa Mola", short: "Kısa Mola" },
+          long: { duration: 15 * 60, label: "Uzun Mola", short: "Uzun Mola" },
+        };
+
+        // Native köprü — Swift menubar uygulaması süreleri runtime'da değiştirebilir
+        window.__setDurations = function (work, short, long) {
+          if (Number.isFinite(work) && work > 0)
+            MODES.work.duration = Math.round(work * 60);
+          if (Number.isFinite(short) && short > 0)
+            MODES.short.duration = Math.round(short * 60);
+          if (Number.isFinite(long) && long > 0)
+            MODES.long.duration = Math.round(long * 60);
+          // mevcut modu yeniden uygula (zamanlayıcı sıfırlanır)
+          if (typeof setMode === "function") {
+            setMode(state.mode, { hard: true });
+          }
+        };
+
+        const STORAGE_KEY = "pomodoro-completed-v1";
+        const DEFAULT_TITLE = "Pomodoro";
+
+        const $ = (sel) => document.querySelector(sel);
+        const ring = $("#ring");
+        const progress = $("#progress");
+        const timeEl = $("#time");
+        const modeLabelEl = $("#modeLabel");
+        const counterEl = $("#counter");
+        const counterNum = $("#counterNum");
+        const startBtn = $("#startBtn");
+        const pauseBtn = $("#pauseBtn");
+        const resetBtn = $("#resetBtn");
+        const tabs = Array.from(document.querySelectorAll(".tab"));
+
+        // Circumference of r=170 circle, kept in sync with the SVG dasharray.
+        const C = 2 * Math.PI * 170;
+        progress.setAttribute("stroke-dasharray", C.toFixed(2));
+
+        const state = {
+          mode: "work",
+          remaining: MODES.work.duration, // seconds
+          total: MODES.work.duration,
+          running: false,
+          intervalId: null,
+          endAt: null, // ms timestamp when current run should reach 0
+          completed: loadCompleted(),
+        };
+
+        function loadCompleted() {
+          try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            const n = raw == null ? 0 : parseInt(raw, 10);
+            return Number.isFinite(n) && n >= 0 ? n : 0;
+          } catch {
+            return 0;
+          }
+        }
+        function saveCompleted() {
+          try {
+            localStorage.setItem(STORAGE_KEY, String(state.completed));
+          } catch {}
+        }
+
+        function format(secs) {
+          const s = Math.max(0, Math.ceil(secs));
+          const mm = String(Math.floor(s / 60)).padStart(2, "0");
+          const ss = String(s % 60).padStart(2, "0");
+          return `${mm}:${ss}`;
+        }
+
+        function render() {
+          timeEl.textContent = format(state.remaining);
+          modeLabelEl.textContent = MODES[state.mode].label;
+          modeLabelEl.dataset.running = state.running ? "true" : "false";
+          ring.dataset.running = state.running ? "true" : "false";
+
+          const elapsed = state.total - state.remaining;
+          const ratio = state.total > 0 ? elapsed / state.total : 0;
+          const offset = C * Math.min(1, Math.max(0, ratio));
+          progress.setAttribute("stroke-dashoffset", offset.toFixed(2));
+
+          counterNum.textContent = String(state.completed);
+
+          // Buttons
+          startBtn.disabled = state.running;
+          pauseBtn.disabled = !state.running;
+
+          // Tabs aria
+          for (const t of tabs) {
+            t.setAttribute(
+              "aria-selected",
+              t.dataset.mode === state.mode ? "true" : "false",
+            );
+          }
+
+          // Tab title
+          if (state.running) {
+            document.title = `🍅 ${format(state.remaining)} · ${MODES[state.mode].short}`;
+          } else if (state.remaining < state.total) {
+            document.title = `${format(state.remaining)} · ${DEFAULT_TITLE}`;
+          } else {
+            document.title = DEFAULT_TITLE;
+          }
+        }
+
+        function setMode(mode, { hard = true } = {}) {
+          if (!MODES[mode]) return;
+          state.mode = mode;
+          state.total = MODES[mode].duration;
+          if (hard) {
+            stop({ silent: true });
+            state.remaining = state.total;
+          }
+          // Disable progress transition for the reset jump
+          progress.style.transition = "none";
+          render();
+          // Re-enable next frame
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              progress.style.transition = "";
+            });
+          });
+        }
+
+        function start() {
+          if (state.running) return;
+          if (state.remaining <= 0) {
+            state.remaining = state.total;
+          }
+          state.running = true;
+          state.endAt = Date.now() + state.remaining * 1000;
+          tick(); // immediate render
+          state.intervalId = setInterval(tick, 250);
+          render();
+        }
+
+        function pause() {
+          if (!state.running) return;
+          clearInterval(state.intervalId);
+          state.intervalId = null;
+          state.running = false;
+          // Snapshot current remaining from endAt
+          if (state.endAt != null) {
+            state.remaining = Math.max(0, (state.endAt - Date.now()) / 1000);
+          }
+          state.endAt = null;
+          render();
+        }
+
+        function stop({ silent = false } = {}) {
+          if (state.intervalId != null) clearInterval(state.intervalId);
+          state.intervalId = null;
+          state.running = false;
+          state.endAt = null;
+          if (!silent) render();
+        }
+
+        function reset() {
+          stop({ silent: true });
+          state.remaining = state.total;
+          render();
+        }
+
+        function tick() {
+          if (!state.running || state.endAt == null) return;
+          const remaining = (state.endAt - Date.now()) / 1000;
+          if (remaining <= 0) {
+            complete();
+            return;
+          }
+          state.remaining = remaining;
+          render();
+        }
+
+        function complete() {
+          stop({ silent: true });
+          state.remaining = 0;
+          const finishedMode = state.mode;
+          if (state.mode === "work") {
+            state.completed += 1;
+            saveCompleted();
+            celebrate();
+          }
+          // Native köprü — Swift app dinliyor olabilir
+          if (window.webkit?.messageHandlers?.complete) {
+            window.webkit.messageHandlers.complete.postMessage({
+              from: finishedMode,
+              count: state.completed,
+            });
+          }
+          render();
+        }
+
+        function celebrate() {
+          counterEl.dataset.celebrate = "true";
+          setTimeout(() => {
+            counterEl.dataset.celebrate = "false";
+          }, 600);
+        }
+
+        // Toggle is what Space binds to — common UX shortcut.
+        function toggle() {
+          if (state.running) pause();
+          else start();
+        }
+
+        // -------- Wire up --------
+        for (const t of tabs) {
+          t.addEventListener("click", () => setMode(t.dataset.mode));
+        }
+        startBtn.addEventListener("click", start);
+        pauseBtn.addEventListener("click", pause);
+        resetBtn.addEventListener("click", reset);
+
+        document.addEventListener("keydown", (e) => {
+          // Skip when user is typing in a field (none right now, but future-proof)
+          const tag = (e.target && e.target.tagName) || "";
+          if (tag === "INPUT" || tag === "TEXTAREA") return;
+
+          if (e.code === "Space") {
+            e.preventDefault();
+            toggle();
+          } else if (e.key === "r" || e.key === "R") {
+            e.preventDefault();
+            reset();
+          }
+        });
+
+        // Sync display whenever tab regains focus, so the timer doesn't drift.
+        document.addEventListener("visibilitychange", () => {
+          if (!document.hidden && state.running) tick();
+        });
+
+        // Init
+        setMode("work", { hard: true });
+        render();
+      })();
+    </script>
+  </body>
+</html>
