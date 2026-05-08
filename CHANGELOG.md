@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2] - 2026-05-08
+
+### Changed
+
+- Pomodoro completion now plays the more celebratory `Hero` sound instead of `Glass` (mode-specific).
+- Refined Turkish TTS messages to feel less robotic: "Pomodoro tamam. Şimdi biraz soluklan." / "Kısa mola bitti. Yeniden odaklanma zamanı." / "Uzun mola bitti. Yeni pomodoro başlasın."
+
+This is also the first release exercising the Sparkle auto-update path end-to-end: clients on v0.2.1 should see this version offered automatically.
+
 ## [0.2.1] - 2026-05-08
 
 ### Fixed

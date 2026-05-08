@@ -178,19 +178,24 @@ final class CompletionEngine {
 
     func handle(finishedMode: String) {
         let nextHint: String
+        let soundName: String
         switch finishedMode {
         case "work":
-            nextHint = "Çalışma süresi tamam. Mola zamanı."
+            nextHint = "Pomodoro tamam. Şimdi biraz soluklan."
+            soundName = "Hero"
         case "short":
-            nextHint = "Kısa mola bitti. Çalışmaya geri dön."
+            nextHint = "Kısa mola bitti. Yeniden odaklanma zamanı."
+            soundName = "Glass"
         case "long":
-            nextHint = "Uzun mola bitti. Hadi yeniden odaklan."
+            nextHint = "Uzun mola bitti. Yeni pomodoro başlasın."
+            soundName = "Glass"
         default:
             nextHint = "Pomodoro turu tamamlandı."
+            soundName = "Glass"
         }
 
         if Settings.soundEnabled {
-            NSSound(named: NSSound.Name("Glass"))?.play()
+            NSSound(named: NSSound.Name(soundName))?.play()
         }
         if Settings.voiceEnabled {
             speak(nextHint)
