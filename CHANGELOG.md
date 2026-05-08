@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2026-05-08
+
+### Added
+
+- Automatic GitHub Actions workflows: `build.yml` (sanity build on every push) and `release.yml` (build DMG and publish GitHub Release on tag push)
+- Sequoia (macOS 15) first-launch bypass instructions in README
+- `xattr -d com.apple.quarantine` terminal fallback for any macOS version
+
+### Changed
+
+- `package.sh` reads `VERSION` from env (or current git tag) instead of hardcoding `0.1.0`. DMG filename and `CFBundleShortVersionString`/`CFBundleVersion` now reflect the real version.
+
 ## [0.1.0] - 2026-05-08
 
 ### Added
