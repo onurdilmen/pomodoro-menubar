@@ -139,7 +139,7 @@ final class WebViewController: NSViewController, WKNavigationDelegate {
         webView.navigationDelegate = self
         view = webView
 
-        if let url = Bundle.module.url(forResource: "index", withExtension: "html") {
+        if let url = Bundle.main.url(forResource: "index", withExtension: "html") {
             webView.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
         }
     }

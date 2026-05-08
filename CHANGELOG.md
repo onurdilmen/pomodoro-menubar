@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-05-08
+
+### Fixed
+
+- **Critical: app crashed on launch on every machine other than the build host.** SwiftPM's auto-generated `Bundle.module` accessor bakes the build-time absolute path into the binary as a fallback (e.g. `/Users/runner/work/...`), and when the resource is not found at the bundle-relative paths it falls back to that hardcoded directory and `fatalError`s. The fix bypasses SwiftPM resources entirely: `package.sh` now copies `index.html` directly into `Pomodoro.app/Contents/Resources/`, and `main.swift` loads it via `Bundle.main`. v0.2.0 is unusable; please install v0.2.1 instead.
+
 ## [0.2.0] - 2026-05-08
 
 ### Added

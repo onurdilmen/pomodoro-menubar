@@ -12,8 +12,11 @@ let package = Package(
             name: "PomodoroMenubar",
             dependencies: [
                 .product(name: "Sparkle", package: "Sparkle"),
-            ],
-            resources: [.process("Resources")]
+            ]
+            // index.html is copied into Pomodoro.app/Contents/Resources/ by package.sh.
+            // We deliberately don't use SwiftPM's resources: pipeline because
+            // Bundle.module's auto-generated accessor hardcodes the build-time
+            // path, which breaks once the .app is shipped to other machines.
         )
     ]
 )

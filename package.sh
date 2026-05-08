@@ -72,10 +72,15 @@ mkdir -p "$APP_DIR/Contents/Frameworks"
 
 cp "$BIN_PATH" "$APP_DIR/Contents/MacOS/$BIN_NAME"
 
-if [[ -d "$RES_BUNDLE" ]]; then
-    cp -R "$RES_BUNDLE" "$APP_DIR/Contents/Resources/"
+# index.html'i direkt Resources'a kopyala (SwiftPM Bundle.module bypass).
+# Bu kasıtlı: SwiftPM auto-generated accessor build-time path'i hardcode
+# ediyor, başka bir Mac'te crash ediyordu. Bundle.main ile temiz çalışır.
+HTML_SRC="Sources/PomodoroMenubar/Resources/index.html"
+if [[ -f "$HTML_SRC" ]]; then
+    cp "$HTML_SRC" "$APP_DIR/Contents/Resources/index.html"
 else
-    echo "Uyarı: resource bundle bulunamadı: $RES_BUNDLE" >&2
+    echo "Hata: $HTML_SRC bulunamadı" >&2
+    exit 1
 fi
 
 # Sparkle.framework bundle'a göm + rpath ayarla
