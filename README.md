@@ -26,7 +26,8 @@ A focused Pomodoro timer that lives in your macOS menu bar. Built natively in Sw
 - 🚀 **Auto-start at login** via macOS `SMAppService` (one click in the right-click menu)
 - 💾 **Persistent settings** — your durations and toggles survive restarts
 - 🌑 **Dark mode by default** — Linear/Vercel-style minimal dark theme
-- 📐 **~176 KB binary, ~1.5 MB DMG** — for comparison, an Electron equivalent would weigh ~150 MB
+- 🔄 **Auto-update via Sparkle** — daily check for new versions; right-click menu has manual "Check for Updates…"
+- 📐 **~4 MB .app, ~3 MB DMG** — Electron equivalent would be ~150 MB
 
 ### Installation
 
@@ -160,7 +161,8 @@ Menü çubuğunda yaşayan, native macOS Pomodoro zamanlayıcısı. Swift ile ya
 - 🚀 **Mac açılışında otomatik başlat** — sağ tık menüsünden tek tıkla
 - 💾 **Tercihler kalıcı** — süre ve toggle ayarları yeniden başlatmadan sonra korunur
 - 🌑 **Koyu tema** — Linear/Vercel tarzı minimal koyu arayüz
-- 📐 **~176 KB binary, ~1.5 MB DMG** — Electron alternatifi olsa ~150 MB olurdu
+- 🔄 **Sparkle ile otomatik güncelleme** — günlük kontrol; sağ tık menüsünde "Güncellemeleri kontrol et"
+- 📐 **~4 MB .app, ~3 MB DMG** — Electron alternatifi olsa ~150 MB olurdu
 
 ### Kurulum
 

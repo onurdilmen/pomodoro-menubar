@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-05-08
+
+### Added
+
+- **Auto-update via Sparkle 2.x** — the app now checks for new versions daily and prompts the user when one is available. Powered by [Sparkle](https://sparkle-project.org), the same framework Bartender, Bear, Rectangle, and most indie macOS apps use.
+- "Güncellemeleri kontrol et…" / "Check for Updates…" item in the right-click menu (manual check).
+- DMG releases are signed with an EdDSA key (`SUPublicEDKey` in Info.plist verifies authenticity before installing).
+- `docs/appcast.xml` hosted on GitHub Pages — the app reads this URL on startup to discover new versions.
+- `scripts/update_appcast.py` — release workflow uses it to add a new `<item>` to the appcast on every tag push.
+
+### Changed
+
+- `package.sh` now embeds `Sparkle.framework` into `Pomodoro.app/Contents/Frameworks/` and adds the required `@executable_path/../Frameworks` rpath.
+- `Info.plist` gained Sparkle settings: `SUFeedURL`, `SUPublicEDKey`, `SUEnableAutomaticChecks`, `SUScheduledCheckInterval`.
+- Bundle size grew from ~176 KB to ~4.1 MB (Sparkle.framework adds ~3 MB; still ~37× smaller than an Electron equivalent).
+
 ## [0.1.1] - 2026-05-08
 
 ### Added

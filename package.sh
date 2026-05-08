@@ -68,6 +68,7 @@ echo "==> Bundle yapılıyor: $APP_DIR"
 rm -rf "$APP_DIR"
 mkdir -p "$APP_DIR/Contents/MacOS"
 mkdir -p "$APP_DIR/Contents/Resources"
+mkdir -p "$APP_DIR/Contents/Frameworks"
 
 cp "$BIN_PATH" "$APP_DIR/Contents/MacOS/$BIN_NAME"
 
@@ -75,6 +76,17 @@ if [[ -d "$RES_BUNDLE" ]]; then
     cp -R "$RES_BUNDLE" "$APP_DIR/Contents/Resources/"
 else
     echo "Uyarı: resource bundle bulunamadı: $RES_BUNDLE" >&2
+fi
+
+# Sparkle.framework bundle'a göm + rpath ayarla
+SPARKLE_FW="$BUILD_DIR/Sparkle.framework"
+if [[ -d "$SPARKLE_FW" ]]; then
+    cp -R "$SPARKLE_FW" "$APP_DIR/Contents/Frameworks/"
+    # SwiftPM @rpath'i otomatik eklemiyor — manuel ekle
+    install_name_tool -add_rpath "@executable_path/../Frameworks" \
+        "$APP_DIR/Contents/MacOS/$BIN_NAME" 2>/dev/null || true
+else
+    echo "Uyarı: Sparkle.framework bulunamadı: $SPARKLE_FW" >&2
 fi
 
 cp Info.plist "$APP_DIR/Contents/Info.plist"

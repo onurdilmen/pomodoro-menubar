@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   release:
-    name: Build DMG and publish release
+    name: Build, sign, publish, update appcast
     runs-on: macos-15
     steps:
       - name: Checkout
@@ -23,15 +23,9 @@ jobs:
         env:
           REF: ${{ github.ref_name }}
         run: |
-          # github.ref_name = "v0.2.0" -> VERSION = "0.2.0"
           VERSION="${REF#v}"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "VERSION=$VERSION"
-
-      - name: Show toolchain
-        run: |
-          swift --version
-          xcodebuild -version || true
 
       - name: Build .app + DMG
         env:
@@ -45,6 +39,55 @@ jobs:
           ls -la "Pomodoro-${VERSION}.dmg"
           du -h "Pomodoro-${VERSION}.dmg"
 
+      - name: Download Sparkle CLI tools
+        run: |
+          curl -sL "https://github.com/sparkle-project/Sparkle/releases/download/2.9.1/Sparkle-2.9.1.tar.xz" \
+              -o /tmp/sparkle.tar.xz
+          mkdir -p /tmp/sparkle
+          tar -xf /tmp/sparkle.tar.xz -C /tmp/sparkle
+
+      - name: Sign DMG with Sparkle EdDSA key
+        id: sign
+        env:
+          SPARKLE_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          KEY_FILE=$(mktemp)
+          printf '%s' "$SPARKLE_KEY" > "$KEY_FILE"
+          DMG="Pomodoro-${VERSION}.dmg"
+          # sign_update prints: sparkle:edSignature="..." length="..."
+          SIGN_LINE=$(/tmp/sparkle/bin/sign_update -f "$KEY_FILE" "$DMG")
+          rm -f "$KEY_FILE"
+          ED_SIG=$(printf '%s' "$SIGN_LINE" | sed -E 's/.*sparkle:edSignature="([^"]+)".*/\1/')
+          LEN=$(printf '%s' "$SIGN_LINE" | sed -E 's/.*length="([^"]+)".*/\1/')
+          echo "ed_signature=$ED_SIG" >> "$GITHUB_OUTPUT"
+          echo "length=$LEN" >> "$GITHUB_OUTPUT"
+
+      - name: Update docs/appcast.xml
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          TAG: ${{ github.ref_name }}
+          ED_SIG: ${{ steps.sign.outputs.ed_signature }}
+          LEN: ${{ steps.sign.outputs.length }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python3 scripts/update_appcast.py "$VERSION" "$TAG" "$ED_SIG" "$LEN"
+
+      - name: Commit appcast.xml back to main
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git checkout main
+          git add docs/appcast.xml docs/release-notes/
+          if git diff --cached --quiet; then
+            echo "No appcast changes to commit"
+          else
+            git commit -m "chore: update appcast.xml for v${VERSION}"
+            git push origin main
+          fi
+
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -52,7 +95,6 @@ jobs:
           TAG: ${{ github.ref_name }}
         run: |
           DMG="Pomodoro-${VERSION}.dmg"
-          # CHANGELOG.md varsa ondan release notes üret, yoksa kısa fallback
           if [ -f CHANGELOG.md ]; then
             NOTES=$(awk -v v="$VERSION" '
               $0 ~ "^## \\[" v "\\]" {flag=1; print; next}
@@ -65,7 +107,6 @@ jobs:
           else
             NOTES="Release $TAG"
           fi
-          # Release zaten varsa upload-only, yoksa create
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" "$DMG" --clobber
           else

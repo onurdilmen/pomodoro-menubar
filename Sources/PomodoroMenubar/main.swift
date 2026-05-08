@@ -2,6 +2,7 @@ import AppKit
 import AVFoundation
 import Carbon
 import ServiceManagement
+import Sparkle
 import UserNotifications
 import WebKit
 
@@ -334,6 +335,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let webController = WebViewController()
     private let completion = CompletionEngine()
     private let hotKey = GlobalHotKey()
+    private let updaterController = SPUStandardUpdaterController(
+        startingUpdater: true,
+        updaterDelegate: nil,
+        userDriverDelegate: nil
+    )
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -482,6 +488,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         hotkeyHint.isEnabled = false
         menu.addItem(hotkeyHint)
 
+        let checkUpdate = NSMenuItem(
+            title: "Güncellemeleri kontrol et…",
+            action: #selector(checkForUpdates),
+            keyEquivalent: ""
+        )
+        checkUpdate.target = self
+        menu.addItem(checkUpdate)
+
         menu.addItem(NSMenuItem.separator())
         let quit = NSMenuItem(
             title: "Pomodoro'dan Çık",
@@ -535,6 +549,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func toggleVoice() { Settings.voiceEnabled.toggle() }
     @objc private func toggleNotification() { Settings.notificationEnabled.toggle() }
     @objc private func toggleLoginItem() { LoginItem.toggle() }
+
+    @objc private func checkForUpdates() {
+        updaterController.checkForUpdates(nil)
+    }
 
     @objc private func testNotification() {
         completion.handle(finishedMode: "work")
