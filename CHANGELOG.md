@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.3] - 2026-05-08
+
+### Changed
+
+- **Sparkle update dialogs are now in Turkish** when the system language is Turkish. Sparkle ships a high-quality `tr.lproj`; we just had to declare the app's supported localizations: `CFBundleDevelopmentRegion = "tr"` and `CFBundleLocalizations = ["tr", "en"]`, plus empty `tr.lproj/` and `en.lproj/` markers under `Contents/Resources/`. Sparkle now picks Turkish on Turkish-locale Macs, English everywhere else.
+
 ## [0.2.2] - 2026-05-08
 
 ### Changed
